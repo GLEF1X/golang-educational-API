@@ -1,7 +1,7 @@
 package service
 
 import (
-	"fasthttp_restful/domain"
+	"github.com/GLEF1X/golang-educational-API/domain"
 	"log"
 )
 
@@ -15,6 +15,10 @@ func (s *CustomerService) GetAllCustomers() []domain.Customer {
 		log.Fatal(err)
 	}
 	return customers
+}
+
+func (s *CustomerService) AddCustomer(customer *domain.Customer) error {
+	return s.repository.AddOne(customer)
 }
 
 func NewCustomerService(repository domain.ICustomerRepository) *CustomerService {

@@ -1,11 +1,12 @@
 package api
 
 import (
-	"fasthttp_restful/api/routes"
-	"fasthttp_restful/configuration"
-	"fasthttp_restful/domain"
-	"fasthttp_restful/serializers"
-	"fasthttp_restful/service"
+	"github.com/GLEF1X/golang-educational-API/adapters/orm"
+	"github.com/GLEF1X/golang-educational-API/adapters/repositories"
+	"github.com/GLEF1X/golang-educational-API/api/controllers"
+	"github.com/GLEF1X/golang-educational-API/core"
+	"github.com/GLEF1X/golang-educational-API/serializers"
+	"github.com/GLEF1X/golang-educational-API/service"
 	"github.com/gorilla/mux"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
@@ -14,25 +15,25 @@ import (
 
 type App struct {
 	router *mux.Router
-	cfg    *configuration.APIConfiguration
+	cfg    *core.APIConfiguration
 }
 
 func (app *App) Init() {
 	router := mux.NewRouter()
+	app.cfg = core.NewAPIConfiguration()
 	app.setupRoutes(router)
-	app.cfg = configuration.GetAPIConfiguration()
 }
 
-func (app *App) getCustomerHandlers() *routes.CustomerHandlers {
-	bunchOfCustomers := []domain.Customer{domain.Customer{Id: 1, Name: "Glib", City: "Konotop", Zipcode: "fake"}}
-	customerRepository := domain.NewCustomerRepositoryStub(bunchOfCustomers)
+func (app *App) initializeCustomerController() *routes.CustomerController {
+	db := orm.PrepareDatabase(app.cfg.GetDsn())
+	customerRepository := repositories.NewCustomerRepository(db)
 	customerService := service.NewCustomerService(customerRepository)
 	jsonSerializer := serializers.JsonSerializer{}
-	return routes.NewCustomerHandler(customerService, jsonSerializer)
+	return routes.NewCustomerController(customerService, jsonSerializer)
 }
 
 func (app *App) setupRoutes(router *mux.Router) {
-	customerHandlers := app.getCustomerHandlers()
+	customerHandlers := app.initializeCustomerController()
 	router.HandleFunc("/getCustomers", customerHandlers.GetCustomers).Methods(fasthttp.MethodGet)
 	app.router = router
 }

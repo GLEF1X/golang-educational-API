@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fasthttp_restful/api"
+	"github.com/GLEF1X/golang-educational-API/api"
 )
 
 func main() {
