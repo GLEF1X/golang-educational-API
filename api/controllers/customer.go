@@ -2,35 +2,33 @@ package routes
 
 import (
 	"github.com/GLEF1X/golang-educational-API/api/apiHelper"
+	"github.com/GLEF1X/golang-educational-API/dto"
 	"github.com/GLEF1X/golang-educational-API/serializers"
 	"github.com/GLEF1X/golang-educational-API/service"
-	"net/http"
+	"github.com/valyala/fasthttp"
 )
 
 type CustomerController struct {
-	customerService *service.CustomerService
+	customerService *service.UserService
 	serializer      serializers.Serializer
 }
 
-func NewCustomerController(customerService *service.CustomerService, serializer serializers.Serializer) *CustomerController {
+func NewCustomerController(customerService *service.UserService, serializer serializers.Serializer) *CustomerController {
 	return &CustomerController{customerService: customerService, serializer: serializer}
 }
 
-func (c *CustomerController) GetCustomers(writer http.ResponseWriter, request *http.Request) {
-	customers := c.customerService.GetAllCustomers()
-	if apiHelper.IsHeadersInvalid(request) {
-		apiHelper.AnswerBadRequest(writer, "Invalid content type header", c.serializer)
-		return
-	}
-	apiHelper.AnswerJson(writer, customers, c.serializer)
+func (c *CustomerController) GetCustomers(ctx *fasthttp.RequestCtx) {
+	customers := c.customerService.GetAllUsers()
+	apiHelper.AnswerJson(ctx, customers, c.serializer)
 }
 
-func (c *CustomerController) AddCustomer(writer http.ResponseWriter, request *http.Request) {
-	apiHelper.IsHeadersInvalid(request)
-	// err := c.customerService.AddCustomer()
-	//if err != nil{
-	//	apiHelper.AnswerBadRequest(writer, err.Error(), c.serializer)
-	//	return
-	//}
-	apiHelper.Answer201(writer, c.serializer)
+func (c *CustomerController) AddCustomer(ctx *fasthttp.RequestCtx) {
+	user := &dto.User{}
+	err := c.serializer.Deserialize(ctx.Request.Body(), user)
+	if err != nil {
+		apiHelper.AnswerBadRequest(ctx, "Wrong type of payload", c.serializer)
+		return
+	}
+	c.customerService.AddUser(user)
+	apiHelper.Answer201(ctx, c.serializer, &dto.User{})
 }

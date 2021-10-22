@@ -1,10 +1,13 @@
 package apiHelper
 
 import (
+	"github.com/GLEF1X/golang-educational-API/core/logging"
 	"github.com/GLEF1X/golang-educational-API/serializers"
 	"github.com/valyala/fasthttp"
-	"log"
-	"net/http"
+)
+
+const (
+	JsonContentType = "application/json"
 )
 
 type APIResponse struct {
@@ -12,47 +15,37 @@ type APIResponse struct {
 	Message string `json:"message,omitempty"`
 }
 
-const (
-	JsonContentType = "application/json"
-)
-
-func answer500OnError(writer http.ResponseWriter, err error) {
-	writer.WriteHeader(fasthttp.StatusInternalServerError)
-	log.Println(err.Error())
+func answer500OnError(ctx *fasthttp.RequestCtx, err error) {
+	ctx.SetStatusCode(fasthttp.StatusInternalServerError)
+	logging.GetLogger().Fatal(err)
 }
 
-func AnswerJson(rw http.ResponseWriter, unserializedData interface{}, serializer serializers.Serializer) {
-	rw.Header().Add("Content-Type", JsonContentType)
+func AnswerJson(ctx *fasthttp.RequestCtx, unserializedData interface{}, serializer serializers.Serializer) {
+	ctx.Response.Header.Add("Content-Type", JsonContentType)
 	serializedData, sErr := serializer.Serialize(unserializedData)
 	if sErr != nil {
-		log.Println("Something went wrong, cannot serialize data")
+		logging.GetLogger().Fatal("Something went wrong, cannot serialize data")
 		return
 	}
-	_, wErr := rw.Write(serializedData)
-	if wErr != nil {
-		log.Println("Cannot write serialized data to apiHelper")
-		return
-	}
+	ctx.SetBody(serializedData)
 }
 
-func IsHeadersInvalid(request *http.Request) bool {
-	return request.Header.Get("content-type") != JsonContentType
-}
-
-func AnswerBadRequest(writer http.ResponseWriter, message string, serializer serializers.Serializer) {
+func AnswerBadRequest(ctx *fasthttp.RequestCtx, message string, serializer serializers.Serializer) {
 	response := &APIResponse{Ok: false, Message: message}
-	serializedResponse, sErr := serializer.Serialize(response)
+	serializedAPIResponse, sErr := serializer.Serialize(response)
 	if sErr != nil {
-		answer500OnError(writer, sErr)
+		answer500OnError(ctx, sErr)
 		return
 	}
-	_, wErr := writer.Write(serializedResponse)
-	if wErr != nil {
-		answer500OnError(writer, wErr)
-		return
-	}
+	ctx.SetBody(serializedAPIResponse)
 }
 
-func Answer201(writer http.ResponseWriter, serializer serializers.Serializer) {
-
+func Answer201(ctx *fasthttp.RequestCtx, serializer serializers.Serializer, serializedStruct interface{}) {
+	response := &APIResponse{Ok: true}
+	serializedAPIResponse, sErr := serializer.Serialize(response)
+	if sErr != nil {
+		answer500OnError(ctx, sErr)
+		return
+	}
+	ctx.SetBody(serializedAPIResponse)
 }

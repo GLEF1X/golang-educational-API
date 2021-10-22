@@ -2,10 +2,11 @@ package main
 
 import (
 	"github.com/GLEF1X/golang-educational-API/api"
+	"github.com/GLEF1X/golang-educational-API/core"
 )
 
 func main() {
-	application := api.App{}
-	application.Init()
-	application.Run()
+	server := core.NewServer()
+	api.SetupRoutes(server)
+	server.Run()
 }

@@ -1,0 +1,13 @@
+{
+  "level": "debug",
+  "encoding": "json",
+  "outputPaths": ["stdout", "/tmp/logs"],
+  "errorOutputPaths": ["stderr"],
+  "timeKey": "timestamp",
+  "timeEncoder": "ISO8601TimeEncoder",
+  "encoderConfig": {
+    "messageKey": "message",
+    "levelKey": "level",
+    "levelEncoder": "lowercase"
+  }
+}
